@@ -4,53 +4,12 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 	
 	"sol-circular-tool/config"
 	"sol-circular-tool/services"
 	"sol-circular-tool/models"
 )
-
-func processJupiterAPI(jupiterURL string, cfg *config.Config, wg *sync.WaitGroup, resultChan chan<- *struct {
-	URL string
-	Data []models.InputMarketData
-	Error error
-}) {
-	defer wg.Done()
-	
-	// 从API获取tokens
-	fmt.Printf("正在从 %s 获取代币列表...\n", jupiterURL)
-	tokens, err := services.FetchTokens(jupiterURL)
-	if err != nil {
-		fmt.Printf("从 %s 获取代币列表失败: %v\n", jupiterURL, err)
-		resultChan <- &struct {
-			URL string
-			Data []models.InputMarketData
-			Error error
-		}{URL: jupiterURL, Error: err}
-		return
-	}
-	fmt.Printf("从 %s 成功获取代币列表\n", jupiterURL)
-	
-	// 获取市场数据
-	fmt.Printf("正在从 Circular API 获取市场数据...\n")
-	inputData, err := services.FetchMarketData(cfg.CIRCULAR_API_URL, cfg.APIKey, tokens)
-	if err != nil {
-		fmt.Printf("从 Circular API 获取市场数据失败: %v\n", err)
-		resultChan <- &struct {
-			URL string
-			Data []models.InputMarketData
-			Error error
-		}{URL: jupiterURL, Error: err}
-		return
-	}
-	
-	fmt.Printf("从 %s 成功获取 %d 条市场数据记录\n", jupiterURL, len(inputData))
-	resultChan <- &struct {
-		URL string
-		Data []models.InputMarketData
-		Error error
-	}{URL: jupiterURL, Data: inputData, Error: nil}
-}
 
 func main() {
 	// 加载配置
@@ -69,7 +28,7 @@ func main() {
 	// 启动所有Jupiter API的处理线程
 	for _, jupiterURL := range cfg.JUPITER_API_URLS {
 		wg.Add(1)
-		go processJupiterAPI(jupiterURL, cfg, &wg, resultChan)
+		go services.ProcessJupiterAPI(jupiterURL, cfg.CIRCULAR_API_URL, cfg.APIKey, &wg, resultChan)
 	}
 	
 	// 等待所有处理完成
@@ -98,11 +57,22 @@ func main() {
 	fmt.Println("正在处理数据...")
 	outputData := services.ProcessMarketData(successData)
 	
-	// 提交处理后的数据
-	fmt.Println("正在提交处理后的数据...")
-	err = services.SubmitMarketData(outputData, successURL)
+	// 添加重试逻辑
+	maxRetries := 3
+	for retries := 0; retries < maxRetries; retries++ {
+		err = services.SubmitMarketData(outputData, successURL)
+		if err == nil {
+			break
+		}
+		
+		fmt.Printf("提交数据失败(尝试 %d/%d): %v\n", retries+1, maxRetries, err)
+		if retries < maxRetries-1 {
+			time.Sleep(5 * time.Second) // 延迟后重试
+		}
+	}
+
 	if err != nil {
-		log.Fatalf("提交数据失败: %v", err)
+		log.Fatalf("多次尝试提交数据均失败: %v", err)
 	}
 	
 	// 记录完成情况

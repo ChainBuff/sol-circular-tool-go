@@ -124,8 +124,12 @@ func FetchMarketData(jupiterURL string, apiKey string, tokens string) ([]models.
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-api-key", apiKey)
 	
+	// 添加超时设置
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+	
 	// 发送请求
-	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("发送请求失败: %w", err)
@@ -292,4 +296,53 @@ func FetchTokens(baseURL string) (string, error) {
 	// 将数组连接成逗号分隔的字符串
 	tokens := strings.Join(tokenAddresses, ",")
 	return tokens, nil
+}
+
+// ProcessJupiterAPI 处理单个Jupiter API的数据获取
+func ProcessJupiterAPI(jupiterURL string, circularURL string, apiKey string, wg *sync.WaitGroup, resultChan chan<- *struct {
+	URL  string
+	Data []models.InputMarketData
+	Error error
+}) {
+	defer wg.Done()
+	
+	// 从API获取tokens
+	fmt.Printf("正在从 %s 获取代币列表...\n", jupiterURL)
+	tokens, err := FetchTokens(jupiterURL)
+	if err != nil {
+		fmt.Printf("从 %s 获取代币列表失败: %v\n", jupiterURL, err)
+		resultChan <- &struct {
+			URL  string
+			Data []models.InputMarketData
+			Error error
+		}{URL: jupiterURL, Error: err}
+		return
+	}
+	fmt.Printf("从 %s 成功获取代币列表\n", jupiterURL)
+	
+	// 获取市场数据
+	fmt.Printf("正在从 Circular API 获取市场数据...\n")
+	inputData, err := FetchMarketData(circularURL, apiKey, tokens)
+	if err != nil {
+		fmt.Printf("从 Circular API 获取市场数据失败: %v\n", err)
+		resultChan <- &struct {
+			URL  string
+			Data []models.InputMarketData
+			Error error
+		}{URL: jupiterURL, Error: err}
+		return
+	}
+	
+	fmt.Printf("从 %s 成功获取 %d 条市场数据记录\n", jupiterURL, len(inputData))
+	resultChan <- &struct {
+		URL  string
+		Data []models.InputMarketData
+		Error error
+	}{URL: jupiterURL, Data: inputData, Error: nil}
+}
+
+// 在init函数中初始化
+func init() {
+	// 将初始时间设置为过去，避免首次调用时不必要的等待
+	lastCircularAPICall = time.Now().Add(-2 * time.Minute)
 } 

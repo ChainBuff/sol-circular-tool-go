@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // Config 配置结构
@@ -15,15 +16,31 @@ type Config struct {
 
 // Load 从config.json加载配置
 func Load() (*Config, error) {
-	// 读取配置文件
-	data, err := os.ReadFile("config.json")
-	if err != nil {
-		return nil, fmt.Errorf("读取配置文件失败: %w", err)
+	// 尝试多个可能的配置文件位置
+	configPaths := []string{
+		"config.json",                     // 当前目录
+		"../config.json",                  // 上级目录
+		filepath.Join(os.Getenv("HOME"), ".sol-circular-tool", "config.json"), // 用户目录
+	}
+	
+	var configData []byte
+	var readErr error
+	
+	for _, path := range configPaths {
+		configData, readErr = os.ReadFile(path)
+		if readErr == nil {
+			fmt.Printf("使用配置文件: %s\n", path)
+			break
+		}
+	}
+	
+	if readErr != nil {
+		return nil, fmt.Errorf("无法找到或读取配置文件: %w", readErr)
 	}
 	
 	// 解析JSON
 	var config Config
-	if err := json.Unmarshal(data, &config); err != nil {
+	if err := json.Unmarshal(configData, &config); err != nil {
 		return nil, fmt.Errorf("解析配置文件失败: %w", err)
 	}
 	
