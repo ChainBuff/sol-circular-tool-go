@@ -1,0 +1,34 @@
+
+Jupiter API:
+{
+  "address": "EzvDheLRnPjWy3S29MZYEi5qzcaR1WR5RNS8YhUA5WG5",
+  "owner": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+  "params": { // Optional
+    "serumAsks":"Ac8Hoi4LBbJfG4pCEUu2sS3jkmNrZBv6tbdmEnxAkRsK",
+    "serumBids":"CF1NyAZjWqi8t9WZ7pSiqCiTSr3taZ94EW44AjyZRsnY",
+    "serumCoinVaultAccount":"65LDE8k8WqhgrZy6NDsVQxGuUq3r8fT8bJunt5WPAZAk",
+    "serumEventQueue":"1Xpk12GqjPLS8bkL8XVRHc6nrnunqcJhDha9jUq6Ymc",
+    "serumPcVaultAccount":"AKATaDtSNPc5HemQCJzhph7o76Q1ndRHyKwai5C4wFkR",
+    "serumVaultSigner":"7xookfS7px2FxR4JzpB3bT9nS3hUAENE4KsGaqkM6AoQ"
+  },
+  "addressLookupTableAddress":"5tVPTN4afHxuyS8CNCNrnU7WZJuYeq5e2FvxUdCMQG7F" // Optional
+}
+
+
+Circular API:
+[
+    {
+      "pubkey": "EzvDheLRnPjWy3S29MZYEi5qzcaR1WR5RNS8YhUA5WG5",
+      "owner": "675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8",
+      "params": { // Optional
+        "addressLookupTableAddress":"5tVPTN4afHxuyS8CNCNrnU7WZJuYeq5e2FvxUdCMQG7F", // Optional
+        "serumAsks":"Ac8Hoi4LBbJfG4pCEUu2sS3jkmNrZBv6tbdmEnxAkRsK",
+        "serumBids":"CF1NyAZjWqi8t9WZ7pSiqCiTSr3taZ94EW44AjyZRsnY",
+        "serumCoinVaultAccount":"65LDE8k8WqhgrZy6NDsVQxGuUq3r8fT8bJunt5WPAZAk",
+        "serumEventQueue":"1Xpk12GqjPLS8bkL8XVRHc6nrnunqcJhDha9jUq6Ymc",
+        "serumPcVaultAccount":"AKATaDtSNPc5HemQCJzhph7o76Q1ndRHyKwai5C4wFkR",
+        "serumVaultSigner":"7xookfS7px2FxR4JzpB3bT9nS3hUAENE4KsGaqkM6AoQ"
+      }
+    },
+    ...
+  ]
