@@ -9,15 +9,15 @@ type VaultPair struct {
 // MarketParams 市场参数结构
 type MarketParams struct {
 	AddressLookupTableAddress string     `json:"addressLookupTableAddress,omitempty"`
-	RoutingGroup             int        `json:"routingGroup,omitempty"`
-	VaultLpMint             *VaultPair `json:"vaultLpMint,omitempty"`
-	VaultToken              *VaultPair `json:"vaultToken,omitempty"`
-	SerumAsks               string     `json:"serumAsks,omitempty"`
-	SerumBids               string     `json:"serumBids,omitempty"`
-	SerumCoinVaultAccount   string     `json:"serumCoinVaultAccount,omitempty"`
-	SerumEventQueue         string     `json:"serumEventQueue,omitempty"`
-	SerumPcVaultAccount     string     `json:"serumPcVaultAccount,omitempty"`
-	SerumVaultSigner        string     `json:"serumVaultSigner,omitempty"`
+	RoutingGroup              int        `json:"routingGroup,omitempty"`
+	VaultLpMint               *VaultPair `json:"vaultLpMint,omitempty"`
+	VaultToken                *VaultPair `json:"vaultToken,omitempty"`
+	SerumAsks                 string     `json:"serumAsks,omitempty"`
+	SerumBids                 string     `json:"serumBids,omitempty"`
+	SerumCoinVaultAccount     string     `json:"serumCoinVaultAccount,omitempty"`
+	SerumEventQueue           string     `json:"serumEventQueue,omitempty"`
+	SerumPcVaultAccount       string     `json:"serumPcVaultAccount,omitempty"`
+	SerumVaultSigner          string     `json:"serumVaultSigner,omitempty"`
 }
 
 // Market 基础市场数据结构
@@ -29,8 +29,14 @@ type Market struct {
 
 // MarketData 市场数据输出结构
 type MarketData struct {
-	Address                  string            `json:"address"`
-	Owner                   string            `json:"owner"`
-	Params                  map[string]string `json:"params,omitempty"`
+	Address                   string            `json:"address"`
+	Owner                     string            `json:"owner"`
+	Params                    map[string]string `json:"params,omitempty"`
 	AddressLookupTableAddress string            `json:"addressLookupTableAddress,omitempty"`
-} 
+}
+
+// InputMarketData 输入的市场数据结构
+type InputMarketData = Market
+
+// OutputMarketData 输出的市场数据结构
+type OutputMarketData = MarketData
