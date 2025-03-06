@@ -1,8 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 	"time"
 	
@@ -11,27 +13,55 @@ import (
 	"sol-circular-tool/models"
 )
 
+// 显示帮助信息
+func showHelp() {
+	fmt.Println("用法: sol-circular-tool -j <Jupiter API URL> -k <API Key> [选项]")
+	fmt.Println("选项:")
+	fmt.Println("  -h, --help                显示帮助信息")
+	fmt.Println("  -j, --jupiter <URL>       指定Jupiter API URL (必填)")
+	fmt.Println("  -k, --key <KEY>           指定API密钥 (必填)")
+	os.Exit(0)
+}
+
 func main() {
-	// 加载配置
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatal(err)
+	// 定义命令行参数
+	var showHelpFlag bool
+	var jupiterURL string
+	var apiKey string
+	
+	flag.BoolVar(&showHelpFlag, "h", false, "显示帮助信息")
+	flag.StringVar(&jupiterURL, "j", "", "指定Jupiter API URL (必填)")
+	flag.StringVar(&apiKey, "k", "", "指定API密钥 (必填)")
+	
+	// 添加长选项别名
+	flag.BoolVar(&showHelpFlag, "help", false, "显示帮助信息")
+	flag.StringVar(&jupiterURL, "jupiter", "", "指定Jupiter API URL (必填)")
+	flag.StringVar(&apiKey, "key", "", "指定API密钥 (必填)")
+	
+	// 解析命令行参数
+	flag.Parse()
+	
+	// 如果指定了帮助标志或参数不足，显示帮助信息并退出
+	if showHelpFlag || jupiterURL == "" || apiKey == "" {
+		showHelp()
 	}
 	
-	var wg sync.WaitGroup
+	// 创建配置
+	cfg := config.NewConfig(jupiterURL, apiKey)
+	
+	// 创建结果通道
 	resultChan := make(chan *struct {
 		URL string
 		Data []models.InputMarketData
 		Error error
-	}, len(cfg.JUPITER_API_URLS))
+	}, 1)
 	
-	// 启动所有Jupiter API的处理线程
-	for _, jupiterURL := range cfg.JUPITER_API_URLS {
-		wg.Add(1)
-		go services.ProcessJupiterAPI(jupiterURL, cfg.CIRCULAR_API_URL, cfg.APIKey, &wg, resultChan)
-	}
+	// 启动Jupiter API处理
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go services.ProcessJupiterAPI(cfg.JUPITER_API_URL, "https://pro.circular.bot/market/cache", cfg.APIKey, &wg, resultChan)
 	
-	// 等待所有处理完成
+	// 等待处理完成
 	go func() {
 		wg.Wait()
 		close(resultChan)
@@ -44,13 +74,13 @@ func main() {
 		if result.Error == nil {
 			successData = result.Data
 			successURL = result.URL
-			break // 使用第一个成功的结果
+			break
 		}
 	}
 	
 	// 检查是否有成功的结果
 	if successData == nil {
-		log.Fatal("所有 Jupiter APIs 都无法获取数据")
+		log.Fatal("无法从Jupiter API获取数据")
 	}
 	
 	// 处理数据
@@ -60,7 +90,7 @@ func main() {
 	// 添加重试逻辑
 	maxRetries := 3
 	for retries := 0; retries < maxRetries; retries++ {
-		err = services.SubmitMarketData(outputData, successURL)
+		err := services.SubmitMarketData(outputData, successURL)
 		if err == nil {
 			break
 		}
@@ -71,10 +101,6 @@ func main() {
 		}
 	}
 
-	if err != nil {
-		log.Fatalf("多次尝试提交数据均失败: %v", err)
-	}
-	
 	// 记录完成情况
 	fmt.Printf("处理完成! 总共处理了 %d 条数据记录\n", len(outputData))
 } 
