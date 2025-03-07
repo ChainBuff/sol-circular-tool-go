@@ -1,7 +1,7 @@
 使用方法:
 
 ```console
-用法: sol-circular-tool -j <Jupiter API URL> -k <API Key> [选项]
+用法: circular -j <Jupiter API URL> -k <API Key> [选项]
 选项:
   -h, --help                        显示帮助信息
   -j, --jupiter <URL>               指定Jupiter API URL (必填)
